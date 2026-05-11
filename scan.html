@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioStock - Pointage Rapide</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">👤</div>
+            <h2>BioStock Terminal</h2>
+            <p>Posez votre doigt pour pointer</p>
+            
+            <!-- Plus de champs de saisie, juste le bouton d'action -->
+            <button id="btnScanRapide" class="btn-primary">
+                DÉMARRER LE SCAN
+            </button>
+
+            <div id="status" class="status-message">En attente...</div>
+            
+            <!-- Lien vers l'enrôlement si c'est un nouvel étudiant -->
+            <p style="margin-top:20px; font-size:0.8rem;">
+                Nouveau ? <a href="enrolement.html" style="color:var(--accent);">S'enregistrer ici</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- BOÎTE DE DIALOGUE (MODAL) -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✅ Identification Réussie</div>
+            <div class="modal-body">
+                <p id="infoDetails"></p>
+            </div>
+            <button class="btn-close" id="btnFermer">Fermer</button>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
