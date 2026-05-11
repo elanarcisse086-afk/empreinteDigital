@@ -1,89 +1,82 @@
+// 1. IMPORTATION DES SERVICES FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
+// 2. CONFIGURATION FIREBASE (Ne modifie pas ces clés)
 const firebaseConfig = {
-  apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
-  authDomain: "empreinte-df8eb.firebaseapp.com",
-  projectId: "empreinte-df8eb",
-  storageBucket: "empreinte-df8eb.firebasestorage.app",
-  messagingSenderId: "359377971742",
-  appId: "1:359377971742:web:0b9338130b71925dfedc0f"
+    apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
+    authDomain: "empreinte-df8eb.firebaseapp.com",
+    projectId: "empreinte-df8eb",
+    storageBucket: "empreinte-df8eb.firebasestorage.app",
+    messagingSenderId: "359377971742",
+    appId: "1:359377971742:web:0b9338130b71925dfedc0f"
 };
 
+// 3. INITIALISATION
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- LE NARRATEUR (TOUJOURS PRÉSENT) ---
-function direBienvenue(nom) {
-    if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance(`Bienvenue ${nom}. Votre identité est confirmée.`);
-        msg.lang = 'fr-FR';
-        window.speechSynthesis.speak(msg);
-    }
-}
-
-// --- LE BIP SONORE ---
-function jouerBip() {
-    new Audio('https://www.soundjay.com/button/beep-07.mp3').play().catch(() => {});
-}
-
-document.getElementById('btnEmpreinte').addEventListener('click', async () => {
-    const status = document.getElementById('status');
+// 4. LOGIQUE D'ENRÔLEMENT AU CLIC
+document.getElementById('btnEnregistrer').addEventListener('click', async () => {
     const nom = document.getElementById('nom').value;
     const matricule = document.getElementById('matricule').value;
+    const status = document.getElementById('status');
 
-    if (!nom) return alert("Veuillez saisir votre nom !");
+    // Vérification simple
+    if (!nom || !matricule) {
+        alert("Veuillez remplir le nom et le matricule avant de continuer.");
+        return;
+    }
 
     try {
-        status.innerText = "Posez votre doigt...";
-        
-        // Simulation de scan biométrique
+        status.innerText = "Communication avec le capteur...";
+        status.style.color = "#1e293b";
+
+        // Génération d'un challenge de sécurité (obligatoire pour WebAuthn)
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
+
+        // CONFIGURATION POUR CRÉER LA CLÉ D'ACCÈS (PASSKEY)
         const options = {
             publicKey: {
                 challenge: challenge,
-                rp: { name: "BioStock" },
-                user: { id: Uint8Array.from(nom, c => c.charCodeAt(0)), name: nom, displayName: nom },
-                pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                rp: { name: "BioStock SOCEGO" }, // Nom de ton système pour le téléphone
+                user: {
+                    id: Uint8Array.from(nom, c => c.charCodeAt(0)),
+                    name: nom,
+                    displayName: nom
+                },
+                pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Algorithme standard (ES256)
                 timeout: 60000,
-                authenticatorSelection: { authenticatorAttachment: "platform" }
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform", // Force l'usage du capteur intégré (empreinte/faceID)
+                    userVerification: "required",
+                    residentKey: "required" // IMPORTANT : Stocke l'identité sur le téléphone pour le scan rapide
+                }
             }
         };
 
+        // DÉCLENCHE L'APPARITION DE LA FENÊTRE SYSTÈME DU TÉLÉPHONE
         const credential = await navigator.credentials.create(options);
         
         if (credential) {
-            // 1. Enregistrement dans Firebase pour le Dashboard SOCEGO
-            await addDoc(collection(db, "presences"), {
+            // A. ENREGISTREMENT DES INFOS DANS FIREBASE (Collection 'etudiants')
+            await addDoc(collection(db, "etudiants"), {
                 nom: nom,
-                matricule: matricule || "ID-VERIFIÉ",
-                horodatage: serverTimestamp()
+                matricule: matricule,
+                dateEnrolement: serverTimestamp()
             });
 
-            // 2. Préparation des informations pour la boîte de dialogue
-            const heure = new Date().toLocaleTimeString();
-            document.getElementById('infoDetails').innerHTML = `
-                <b>Nom:</b> ${nom}<br>
-                <b>Heure:</b> ${heure}<br>
-                <b>Statut:</b> Présent ✅
-            `;
-
-            // 3. Affichage de la boîte de dialogue
-            document.getElementById('infoModal').style.display = 'flex';
-
-            // 4. Feedback sonore et vocal
-            jouerBip();
-            setTimeout(() => direBienvenue(nom), 500);
-
-            status.innerText = "✅ Pointage réussi !";
+            // B. MISE À JOUR DE L'INTERFACE
+            status.innerText = "✅ Succès ! Votre empreinte est liée à votre compte.";
+            status.style.color = "#22c55e";
+            
+            alert("Enregistrement réussi ! Vous pouvez maintenant aller sur la page de Scan.");
         }
     } catch (err) {
-        status.innerText = "❌ Échec de l'identification";
+        // Gestion des erreurs (ex: si l'utilisateur annule le scan)
+        status.innerText = "❌ Échec : " + err.message;
+        status.style.color = "#ef4444";
+        console.error("Erreur d'enrôlement :", err);
     }
 });
-
-// Fermer la boîte de dialogue
-document.getElementById('btnFermer').onclick = () => {
-    document.getElementById('infoModal').style.display = 'none';
-};
