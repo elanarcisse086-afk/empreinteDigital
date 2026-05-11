@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-// 2. CONFIGURATION FIREBASE (Ne modifie pas ces clés)
+// 2. CONFIGURATION FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
     authDomain: "empreinte-df8eb.firebaseapp.com",
@@ -32,7 +32,7 @@ document.getElementById('btnEnregistrer').addEventListener('click', async () => 
         status.innerText = "Communication avec le capteur...";
         status.style.color = "#1e293b";
 
-        // Génération d'un challenge de sécurité (obligatoire pour WebAuthn)
+        // Génération d'un challenge de sécurité
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
 
@@ -40,18 +40,18 @@ document.getElementById('btnEnregistrer').addEventListener('click', async () => 
         const options = {
             publicKey: {
                 challenge: challenge,
-                rp: { name: "BioStock SOCEGO" }, // Nom de ton système pour le téléphone
+                rp: { name: "BioStock SOCEGO" }, 
                 user: {
                     id: Uint8Array.from(nom, c => c.charCodeAt(0)),
                     name: nom,
                     displayName: nom
                 },
-                pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Algorithme standard (ES256)
+                pubKeyCredParams: [{ alg: -7, type: "public-key" }],
                 timeout: 60000,
                 authenticatorSelection: {
-                    authenticatorAttachment: "platform", // Force l'usage du capteur intégré (empreinte/faceID)
+                    authenticatorAttachment: "platform",
                     userVerification: "required",
-                    residentKey: "required" // IMPORTANT : Stocke l'identité sur le téléphone pour le scan rapide
+                    residentKey: "required" 
                 }
             }
         };
@@ -60,7 +60,12 @@ document.getElementById('btnEnregistrer').addEventListener('click', async () => 
         const credential = await navigator.credentials.create(options);
         
         if (credential) {
-            // A. ENREGISTREMENT DES INFOS DANS FIREBASE (Collection 'etudiants')
+            // --- MODIFICATION : SAUVEGARDE LOCALE POUR LE MULTI-UTILISATEUR ---
+            // On enregistre les infos dans la mémoire du téléphone actuel
+            localStorage.setItem("nomUtilisateur", nom);
+            localStorage.setItem("matriculeUtilisateur", matricule);
+
+            // A. ENREGISTREMENT DES INFOS DANS FIREBASE
             await addDoc(collection(db, "etudiants"), {
                 nom: nom,
                 matricule: matricule,
@@ -68,13 +73,12 @@ document.getElementById('btnEnregistrer').addEventListener('click', async () => 
             });
 
             // B. MISE À JOUR DE L'INTERFACE
-            status.innerText = "✅ Succès ! Votre empreinte est liée à votre compte.";
+            status.innerText = "✅ Succès ! Votre empreinte est liée à ce téléphone.";
             status.style.color = "#22c55e";
             
-            alert("Enregistrement réussi ! Vous pouvez maintenant aller sur la page de Scan.");
+            alert("Enregistrement réussi ! Vous pouvez maintenant utiliser la page de Scan sur ce téléphone.");
         }
     } catch (err) {
-        // Gestion des erreurs (ex: si l'utilisateur annule le scan)
         status.innerText = "❌ Échec : " + err.message;
         status.style.color = "#ef4444";
         console.error("Erreur d'enrôlement :", err);
