@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>BioStock - Dashboard Temps Réel</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .header { background: #1e293b; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: #334155; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #38bdf8; color: white; }
+        .badge { background: #22c55e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BioStock - Suivi des Présences</h1>
+            <p>Données synchronisées en temps réel (Simulation Mony Keng/SOCEGO)</p>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Matricule</th>
+                    <th>Nom Complet</th>
+                    <th>Heure du Scan</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody id="live-data"></tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
+            authDomain: "empreinte-df8eb.firebaseapp.com",
+            projectId: "empreinte-df8eb",
+            storageBucket: "empreinte-df8eb.firebasestorage.app",
+            messagingSenderId: "359377971742",
+            appId: "1:359377971742:web:0b9338130b71925dfedc0f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const q = query(collection(db, "presences"), orderBy("horodatage", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const table = document.getElementById('live-data');
+            table.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                const temps = item.horodatage ? item.horodatage.toDate().toLocaleTimeString() : "Synchronisation...";
+                table.innerHTML += `<tr><td>${item.matricule}</td><td><b>${item.nom}</b></td><td>${temps}</td><td><span class="badge">PRÉSENT</span></td></tr>`;
+            });
+        });
+    </script>
+</body>
+</html>
