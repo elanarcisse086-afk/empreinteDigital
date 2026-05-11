@@ -3,38 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioStock - Pointage Rapide</title>
+    <title>BioStock - Scan Rapide</title>
     <link rel="stylesheet" href="scanStyle.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <div class="logo">👤</div>
-            <h2>BioStock Terminal</h2>
+            <div class="icon">☝️</div>
+            <h2>Terminal SOCEGO</h2>
             <p>Posez votre doigt pour pointer</p>
-            
-            <!-- Plus de champs de saisie, juste le bouton d'action -->
-            <button id="btnScanRapide" class="btn-primary">
-                DÉMARRER LE SCAN
-            </button>
-
-            <div id="status" class="status-message">En attente...</div>
-            
-            <!-- Lien vers l'enrôlement si c'est un nouvel étudiant -->
-            <p style="margin-top:20px; font-size:0.8rem;">
-                Nouveau ? <a href="index.html" style="color:var(--accent);">S'enregistrer ici</a>
-            </p>
+            <button id="btnScan" class="btn-scan">SCANNER MON DOIGT</button>
+            <p id="status">Prêt pour le scan</p>
         </div>
     </div>
 
-    <!-- BOÎTE DE DIALOGUE (MODAL) -->
-    <div id="infoModal" class="modal">
+    <!-- TA BOÎTE DE DIALOGUE (MODAL) -->
+    <div id="modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">✅ Identification Réussie</div>
-            <div class="modal-body">
-                <p id="infoDetails"></p>
+            <div class="modal-icon">✅</div>
+            <h3 style="color:#22c55e">IDENTIFIÉ !</h3>
+            <div id="details" class="modal-body">
+                <!-- Les infos s'afficheront ici via le JS -->
             </div>
-            <button class="btn-close" id="btnFermer">Fermer</button>
+            <button class="btn-close" id="btnFermer">TERMINER</button>
         </div>
     </div>
 
