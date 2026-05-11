@@ -3,42 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioStock - Identification SOCEGO</title>
+    <title>BioStock - Enrôlement</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <div class="logo">☝️</div>
-            <h2>BioStock</h2>
-            <p>Pointage Biométrique Professionnel</p>
-            
+            <div class="icon">📝</div>
+            <h2>Enrôlement Étudiant</h2>
             <div class="input-group">
-                <label>Nom complet</label>
-                <input type="text" id="nom" placeholder="Entrez votre nom" required>
+                <input type="text" id="nom" placeholder="Nom complet (ex: Ela Nkamje)" required>
+                <input type="text" id="matricule" placeholder="Matricule" required>
             </div>
-
-            <div class="input-group">
-                <label>Matricule</label>
-                <input type="text" id="matricule" placeholder="Ex: IMK-2026-XYZ">
-            </div>
-
-            <button id="btnEmpreinte" class="btn-primary">SCANNER MON DOIGT</button>
-            <div id="status" class="status-message">Prêt pour identification</div>
+            <button id="btnEnregistrer" class="btn-primary">CRÉER MA CLÉ BIO</button>
+            <p id="status">En attente...</p>
+            <a href="scan.html" class="link-nav">Aller au Pointage →</a>
         </div>
     </div>
-
-    <!-- BOÎTE DE DIALOGUE D'IDENTIFICATION (MODAL) -->
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">✅ Identification Réussie</div>
-            <div class="modal-body">
-                <p id="infoDetails"></p>
-            </div>
-            <button class="btn-close" id="btnFermer">Fermer</button>
-        </div>
-    </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>
