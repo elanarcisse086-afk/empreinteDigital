@@ -3,21 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test d'empreinte</title>
+    <title>BioStock - Inscription Biométrique</title>
+    <!-- Lien vers ton fichier CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Inscription Institut Mony Keng</h1>
-        <form id="registrationForm">
-            <input type="text" id="nom" placeholder="Nom complet de l'étudiant" required>
-            <input type="text" id="matricule" placeholder="Numéro Matricule" required>
+        <div class="card">
+            <h2>Institut Mony Keng</h2>
+            <p>Système de Pointage Biométrique</p>
             
-            <div id="status">En attente des informations...</div>
-            
-            <button type="button" id="btnEmpreinte">ENREGISTRER L'EMPREINTE</button>
-        </form>
+            <div class="input-group">
+                <label for="nom">Nom Complet</label>
+                <input type="text" id="nom" placeholder="Ex: Ela Nkamje Narcisse" required>
+            </div>
+
+            <div class="input-group">
+                <label for="matricule">Matricule / ID</label>
+                <input type="text" id="matricule" placeholder="Ex: IMK-2026-001" required>
+            </div>
+
+            <button id="btnEmpreinte" class="btn-primary">
+                <span class="icon">☝️</span> ENREGISTRER L'EMPREINTE
+            </button>
+
+            <div id="status" class="status-message">En attente d'action...</div>
+        </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Lien vers ton fichier JS (obligatoire pour Firebase) -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
