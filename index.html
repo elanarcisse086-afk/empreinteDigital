@@ -3,35 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioStock - Inscription Biométrique</title>
-    <!-- Lien vers ton fichier CSS -->
+    <title>BioStock - Identification SOCEGO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h2>Institut Mony Keng</h2>
-            <p>Système de Pointage Biométrique</p>
+            <div class="logo">☝️</div>
+            <h2>BioStock</h2>
+            <p>Pointage Biométrique Professionnel</p>
             
             <div class="input-group">
-                <label for="nom">Nom Complet</label>
-                <input type="text" id="nom" placeholder="Ex: Ela Nkamje Narcisse" required>
+                <label>Nom complet</label>
+                <input type="text" id="nom" placeholder="Entrez votre nom" required>
             </div>
 
             <div class="input-group">
-                <label for="matricule">Matricule / ID</label>
-                <input type="text" id="matricule" placeholder="Ex: IMK-2026-001" required>
+                <label>Matricule</label>
+                <input type="text" id="matricule" placeholder="Ex: IMK-2026-XYZ">
             </div>
 
-            <button id="btnEmpreinte" class="btn-primary">
-                <span class="icon">☝️</span> ENREGISTRER L'EMPREINTE
-            </button>
-
-            <div id="status" class="status-message">En attente d'action...</div>
+            <button id="btnEmpreinte" class="btn-primary">SCANNER MON DOIGT</button>
+            <div id="status" class="status-message">Prêt pour identification</div>
         </div>
     </div>
 
-    <!-- Lien vers ton fichier JS (obligatoire pour Firebase) -->
+    <!-- BOÎTE DE DIALOGUE D'IDENTIFICATION (MODAL) -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✅ Identification Réussie</div>
+            <div class="modal-body">
+                <p id="infoDetails"></p>
+            </div>
+            <button class="btn-close" id="btnFermer">Fermer</button>
+        </div>
+    </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>
