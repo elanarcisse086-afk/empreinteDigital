@@ -13,8 +13,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- FONCTIONS FEEDBACK ---
-function direBienvenue(nom) {
+// FONCTIONS FEEDBACK (Audio + Voix)
+function lancerFeedback(nom) {
+    // 1. Le Bip
+    new Audio('https://www.soundjay.com/button/beep-07.mp3').play().catch(() => {});
+    
+    // 2. Le Narrateur
     if ('speechSynthesis' in window) {
         const msg = new SpeechSynthesisUtterance(`Bienvenue ${nom}. Accès autorisé.`);
         msg.lang = 'fr-FR';
@@ -22,64 +26,48 @@ function direBienvenue(nom) {
     }
 }
 
-function jouerBip() {
-    new Audio('https://www.soundjay.com/button/beep-07.mp3').play().catch(() => {});
-}
-
-// --- LOGIQUE DE SCAN ---
-document.getElementById('btnScanRapide').addEventListener('click', async () => {
+document.getElementById('btnScan').addEventListener('click', async () => {
     const status = document.getElementById('status');
-    
-    try {
-        status.innerText = "Recherche de votre empreinte...";
+    const nomFixe = "Ela Nkamje Narcisse Beauclaire"; // Simulation pour le prototype
 
+    try {
+        status.innerText = "Recherche de votre clé...";
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
 
-        // On demande au téléphone de RECONNAÎTRE un utilisateur déjà inscrit
         const assertion = await navigator.credentials.get({
-            publicKey: {
-                challenge: challenge,
-                timeout: 60000,
-                userVerification: "required"
-            }
+            publicKey: { challenge, timeout: 60000, userVerification: "required" }
         });
 
         if (assertion) {
-            // Dans un système réel, l'ID utilisateur est stocké dans l'assertion.
-            // Pour ton prototype, on récupère le nom associé à la clé.
-            const nomReconnu = "Ela Nkamje Narcisse"; // Simulation de la reconnaissance
-
-            // 1. Envoi au Dashboard
+            // Enregistrement Firebase
             await addDoc(collection(db, "presences"), {
-                nom: nomReconnu,
+                nom: nomFixe,
                 horodatage: serverTimestamp(),
                 statut: "Présent"
             });
 
-            // 2. Affichage Modal
-            document.getElementById('infoDetails').innerHTML = `
-                <div style="font-size:2rem; margin-bottom:10px;">👤</div>
-                <b>Utilisateur :</b> ${nomReconnu}<br>
-                <b>Heure :</b> ${new Date().toLocaleTimeString()}<br>
-                <b>Lieu :</b> SOCEGO Bafoussam
+            // REMPLISSAGE DE LA BOÎTE DE DIALOGUE
+            const heure = new Date().toLocaleTimeString();
+            document.getElementById('details').innerHTML = `
+                <p><b>Nom :</b> ${nomFixe}</p>
+                <p><b>Heure :</b> ${heure}</p>
+                <p><b>Lieu :</b> Bafoussam</p>
             `;
-            document.getElementById('infoModal').style.display = 'flex';
 
-            // 3. Sons et Voix
-            jouerBip();
-            setTimeout(() => direBienvenue(nomReconnu), 500);
-
-            status.innerText = "✅ Identifié avec succès";
+            // AFFICHAGE DE LA BOÎTE
+            document.getElementById('modal').style.display = 'flex';
+            
+            lancerFeedback(nomFixe);
+            status.innerText = "✅ Pointage réussi";
         }
     } catch (err) {
-        status.innerText = "❌ Empreinte non reconnue";
+        status.innerText = "❌ Erreur ou aucune clé trouvée";
         console.error(err);
     }
 });
 
-// Fermeture
+// Fermer la boîte
 document.getElementById('btnFermer').onclick = () => {
-    document.getElementById('infoModal').style.display = 'none';
-    document.getElementById('status').innerText = "Prêt pour le scan suivant";
+    document.getElementById('modal').style.display = 'none';
 };
