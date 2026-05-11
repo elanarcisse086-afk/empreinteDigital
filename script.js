@@ -1,50 +1,73 @@
+// Importation des modules Firebase via CDN (plus simple pour GitHub Pages)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+// Tes clés que tu viens de récupérer
+const firebaseConfig = {
+  apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
+  authDomain: "empreinte-df8eb.firebaseapp.com",
+  projectId: "empreinte-df8eb",
+  storageBucket: "empreinte-df8eb.firebasestorage.app",
+  messagingSenderId: "359377971742",
+  appId: "1:359377971742:web:0b9338130b71925dfedc0f",
+  measurementId: "G-HBTX4F50T1"
+};
+
+// Initialisation
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 document.getElementById('btnEmpreinte').addEventListener('click', async () => {
     const status = document.getElementById('status');
     const nom = document.getElementById('nom').value;
+    const matricule = document.getElementById('matricule').value;
 
-    if (!nom) {
-        alert("Veuillez entrer le nom de l'étudiant d'abord.");
+    if (!nom || !matricule) {
+        alert("Veuillez remplir le nom et le matricule !");
         return;
     }
 
-    // Vérifier si le navigateur supporte la biométrie
     if (window.PublicKeyCredential) {
-        status.innerText = "Posez votre doigt sur le lecteur...";
+        status.innerText = "Posez votre doigt sur le capteur...";
         
         try {
-            // Configuration factice pour la simulation WebAuthn
-            const challenge = new Uint8Array(32); // Challenge de sécurité
+            const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
 
             const options = {
                 publicKey: {
                     challenge: challenge,
-                    rp: { name: "BioStock Simulation" },
+                    rp: { name: "BioStock" },
                     user: {
                         id: Uint8Array.from(nom, c => c.charCodeAt(0)),
                         name: nom,
                         displayName: nom
                     },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }], // Algorithme standard
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
                     timeout: 60000,
-                    authenticatorSelection: { authenticatorAttachment: "platform" } // Force le lecteur local
+                    authenticatorSelection: { authenticatorAttachment: "platform" }
                 }
             };
 
-            // Déclenche l'empreinte sur le téléphone
             const credential = await navigator.credentials.create(options);
             
             if (credential) {
-                status.innerText = "✅ Empreinte de " + nom + " enregistrée !";
+                // ENVOI DES DONNÉES VERS FIREBASE
+                await addDoc(collection(db, "presences"), {
+                    nom: nom,
+                    matricule: matricule,
+                    horodatage: serverTimestamp(),
+                    statut: "Présent"
+                });
+
+                status.innerText = "✅ Succès ! Pointage enregistré dans le Cloud.";
                 status.style.color = "#27ae60";
-                console.log("Succès :", credential);
             }
         } catch (err) {
-            status.innerText = "❌ Erreur ou annulation.";
-            status.style.color = "#c0392b";
+            status.innerText = "❌ Erreur : " + err.message;
             console.error(err);
         }
     } else {
-        alert("Désolé, votre appareil ne supporte pas la biométrie Web.");
+        alert("Biométrie non supportée sur ce navigateur.");
     }
 });
