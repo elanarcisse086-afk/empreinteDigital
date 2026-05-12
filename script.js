@@ -84,3 +84,6 @@ document.getElementById('btnEnregistrer').addEventListener('click', async () => 
         console.error("Erreur d'enrôlement :", err);
     }
 });
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
