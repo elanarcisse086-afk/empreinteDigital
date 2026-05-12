@@ -1,27 +1,170 @@
-/* Styles de base */
-body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.card { background: white; padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 300px; }
-.btn-scan { width: 100%; padding: 15px; background: #0f172a; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+/* 1. VARIABLES DE DESIGN & DARK MODE */
+:root {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #1e293b;
+    --primary: #2563eb;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --shadow-light: 10px 10px 20px #d1d5db, -10px -10px 20px #ffffff;
+    --shadow-inset: inset 6px 6px 12px #d1d5db, inset -6px -6px 12px #ffffff;
+}
 
-/* STYLE DE LA BOÎTE DE DIALOGUE (MODAL) */
-.modal {
-    display: none; /* Caché par défaut */
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
-    z-index: 999;
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --shadow-light: 10px 10px 20px #020617, -10px -10px 20px #1e293b;
+        --shadow-inset: inset 6px 6px 12px #020617, inset -6px -6px 12px #1e293b;
+    }
+}
+
+/* 2. MISE EN PAGE GLOBALE */
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+#status {
+    margin: 20px 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-height: 1.5rem;
+}
+
+/* 3. LE BOUTON DE SCAN NEUMORPHIQUE */
+.scan-area {
+    width: 180px;
+    height: 180px;
+    margin: 40px auto;
+    background: var(--card);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-light);
+    cursor: pointer;
+    border: 8px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.scan-area:active {
+    box-shadow: var(--shadow-inset);
+    transform: scale(0.96);
+}
+
+.scan-icon {
+    font-size: 3rem;
+    margin-bottom: 5px;
+}
+
+.scan-text {
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary);
+}
+
+/* 4. ANIMATION LASER (Ligne de scan) */
+.scan-area::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, transparent, var(--primary), transparent);
+    box-shadow: 0 0 15px var(--primary);
+    animation: laserMove 2.5s infinite ease-in-out;
+}
+
+@keyframes laserMove {
+    0% { top: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* 5. DESIGN DE LA BOÎTE DE DIALOGUE (MODAL) */
+#modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: none; /* Masqué par défaut */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .modal-content {
-    background: white; padding: 30px; border-radius: 20px; width: 80%; max-width: 320px;
-    text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    background: var(--card);
+    width: 85%;
+    max-width: 350px;
+    padding: 30px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
     animation: slideUp 0.3s ease-out;
 }
-
-.modal-icon { font-size: 3rem; margin-bottom: 10px; }
-.modal-body { text-align: left; margin: 20px 0; background: #f8fafc; padding: 15px; border-radius: 10px; }
-.btn-close { background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; }
 
 @keyframes slideUp {
     from { transform: translateY(50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+#details p {
+    margin: 12px 0;
+    font-size: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+
+/* 6. BOUTONS DANS LA MODAL */
+.btn-close {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-top: 20px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-whatsapp-modal {
+    background: #25D366;
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-top: 10px;
 }
