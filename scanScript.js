@@ -13,22 +13,31 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- FONCTION PARLER AMÉLIORÉE ---
 function parler(message) {
     if ('speechSynthesis' in window) {
+        // On annule toute parole en cours pour éviter les blocages
+        window.speechSynthesis.cancel(); 
+        
         const msg = new SpeechSynthesisUtterance(message);
         msg.lang = 'fr-FR';
+        msg.pitch = 1;
+        msg.rate = 1;
         window.speechSynthesis.speak(msg);
     }
 }
 
 document.getElementById('btnScan').addEventListener('click', async () => {
     const status = document.getElementById('status');
-    const nom = localStorage.getItem("nomUtilisateur") || "Inconnu";
+    const nom = localStorage.getItem("nomUtilisateur") || "Utilisateur";
     const matricule = localStorage.getItem("matriculeUtilisateur") || "000";
 
     try {
+        status.innerText = "Analyse de l'empreinte...";
+        
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
+        
         const assertion = await navigator.credentials.get({
             publicKey: { challenge, timeout: 60000, userVerification: "required" }
         });
@@ -38,17 +47,24 @@ document.getElementById('btnScan').addEventListener('click', async () => {
             const h = maintenant.getHours();
             const m = maintenant.getMinutes();
             
-            // --- LOGIQUE DE RETARD (Limite 08h00) ---
+            // --- LOGIQUE DE STATUT ---
             let statutFinal = "Présent";
-            let msgVocal = `Bienvenue ${nom}. Vous êtes marqué présent.`;
+            let msgVocal = `Bienvenue ${nom}. Votre présence a été enregistrée.`;
 
             if (h > 8 || (h === 8 && m > 0)) {
                 statutFinal = "En retard";
-                msgVocal = `Attention ${nom}, vous êtes en retard.`;
+                msgVocal = `Attention ${nom}. Vous êtes en retard aujourd'hui.`;
             }
 
-            // Enregistrement Firebase
-            await addDoc(collection(db, "presences"), {
+            // --- ÉTAPE CRUCIALE : PARLER TOUT DE SUITE ---
+            // On parle avant d'attendre Firebase pour garder le lien avec le clic
+            parler(msgVocal);
+
+            // Mise à jour visuelle immédiate
+            status.innerText = "✅ Authentification réussie";
+
+            // Enregistrement Firebase (en arrière-plan)
+            addDoc(collection(db, "presences"), {
                 nom: nom,
                 matricule: matricule,
                 horodatage: serverTimestamp(),
@@ -56,31 +72,32 @@ document.getElementById('btnScan').addEventListener('click', async () => {
                 statut: statutFinal
             });
 
-            // --- MODIFICATION : GÉNÉRATION DU LIEN WHATSAPP ---
-            const texteWhatsApp = `Rapport de Présence SOCEGO\n-------------------\nNom: ${nom}\nMatricule: ${matricule}\nStatut: ${statutFinal}\nHeure: ${maintenant.toLocaleTimeString()}\nDate: ${maintenant.toLocaleDateString('fr-FR')}`;
+            // Préparation du lien WhatsApp
+            const texteWhatsApp = `BIOSTOCK - Rapport\n---\nNom: ${nom}\nStatut: ${statutFinal}\nHeure: ${maintenant.toLocaleTimeString()}`;
             const lienWhatsApp = `https://wa.me/?text=${encodeURIComponent(texteWhatsApp)}`;
 
-            // Affichage Modal avec Bouton WhatsApp
+            // Affichage de la Modal
             document.getElementById('details').innerHTML = `
-                <p><b>Nom:</b> ${nom}</p>
-                <p><b>Statut:</b> <span style="color:${statutFinal === 'Présent' ? 'green' : 'red'}">${statutFinal}</span></p>
-                <p><b>Heure:</b> ${maintenant.toLocaleTimeString()}</p>
-                <hr>
-                <a href="${lienWhatsApp}" target="_blank" style="display:inline-block; padding:10px; background:#25D366; color:white; text-decoration:none; border-radius:5px; font-weight:bold; width:100%; text-align:center;">
-                    ENVOYER PAR WHATSAPP
+                <p style="font-size:1.2rem;">Bienvenue, <b>${nom}</b></p>
+                <p>Statut: <span style="color:${statutFinal === 'Présent' ? '#22c55e' : '#ef4444'}; font-weight:bold;">${statutFinal}</span></p>
+                <p>Heure: ${maintenant.toLocaleTimeString()}</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                <a href="${lienWhatsApp}" target="_blank" style="display:block; padding:12px; background:#25D366; color:white; text-decoration:none; border-radius:10px; font-weight:bold; text-align:center;">
+                    PARTAGER SUR WHATSAPP
                 </a>
             `;
-            document.getElementById('modal').style.display = 'flex';
             
-            parler(msgVocal);
-            status.innerText = "✅ Succès";
+            document.getElementById('modal').style.display = 'flex';
         }
     } catch (err) {
-        status.innerText = "❌ Échec du scan";
+        console.error(err);
+        status.innerText = "❌ Scan annulé ou erreur";
     }
 });
 
-document.getElementById('btnFermer').onclick = () => document.getElementById('modal').style.display = 'none';
+document.getElementById('btnFermer').onclick = () => {
+    document.getElementById('modal').style.display = 'none';
+};
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
