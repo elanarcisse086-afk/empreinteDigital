@@ -5,21 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BioStock - Enrôlement</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="icon">📝</div>
-            <h2>Enrôlement Étudiant</h2>
-            <div class="input-group">
-                <input type="text" id="nom" placeholder="Nom complet (ex: Ela Nkamje)" required>
-                <input type="text" id="matricule" placeholder="Matricule" required>
-            </div>
-            <button id="btnEnregistrer" class="btn-primary">CRÉER MA CLÉ BIO</button>
-            <p id="status">En attente...</p>
-            <a href="scan.html" class="link-nav">Aller au Pointage →</a>
+
+    <div class="glass-container">
+        <div class="welcome-section">
+            <div class="logo-circle">👤</div>
+            <h1>Bienvenue</h1>
+            <p>Enregistrez vos informations pour activer votre accès biométrique.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="nom">Nom Complet</label>
+            <input type="text" id="nom" placeholder="Ex: Ela Nkamje Beauclaire" autocomplete="name">
+            
+            <label for="matricule">Matricule</label>
+            <input type="text" id="matricule" placeholder="Ex: IMK-2026-001">
+        </div>
+
+        <button id="btnEnregistrer" class="btn btn-primary">
+            Lier mon empreinte ☝️
+        </button>
+
+        <p id="status"></p>
+
+        <div class="footer-links">
+            <a href="scan.html">Aller au Scan →</a>
         </div>
     </div>
+
+    <!-- Script de logique -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
