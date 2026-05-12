@@ -81,3 +81,7 @@ document.getElementById('btnScan').addEventListener('click', async () => {
 });
 
 document.getElementById('btnFermer').onclick = () => document.getElementById('modal').style.display = 'none';
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
