@@ -2,39 +2,70 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>BioStock - Dashboard Temps Réel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioStock - Dashboard Administration</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; }
+        :root { --primary: #0f172a; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --whatsapp: #25D366; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
         .container { max-width: 900px; margin: auto; }
-        .header { background: #1e293b; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; color: #334155; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #38bdf8; color: white; }
-        .badge { background: #22c55e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* Cartes de statistiques */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .stat-card h3 { margin: 0; font-size: 0.9rem; text-transform: uppercase; color: #64748b; }
+        .stat-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; }
+
+        /* Tableau des étudiants */
+        .data-table { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; border-collapse: collapse; }
+        .data-table th { background: var(--primary); color: white; padding: 15px; text-align: left; }
+        .data-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .badge-present { background: #dcfce7; color: var(--success); }
+        .badge-retard { background: #fef3c7; color: var(--warning); }
+        .badge-absent { background: #fee2e2; color: var(--danger); }
+
+        .btn-whatsapp { background: var(--whatsapp); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; }
+        .btn-whatsapp:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <div class="header">
-            <h1>BioStock - Suivi des Présences</h1>
-            <p>Données synchronisées en temps réel (Simulation Mony Keng/SOCEGO)</p>
+        <header>
+            <div>
+                <h1>BioStock Dashboard</h1>
+                <p id="dateDuJour"></p>
+            </div>
+            <button onclick="window.location.reload()" style="padding: 10px; cursor: pointer;">Actualiser 🔄</button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card"><h3>Inscrits</h3><p id="totalInscrits">0</p></div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--success);"><h3>Présents</h3><p id="totalPresents" style="color: var(--success);">0</p></div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--warning);"><h3>Retards</h3><p id="totalRetards" style="color: var(--warning);">0</p></div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><h3>Absents</h3><p id="totalAbsents" style="color: var(--danger);">0</p></div>
         </div>
-        <table>
+
+        <table class="data-table">
             <thead>
                 <tr>
+                    <th>Étudiant</th>
                     <th>Matricule</th>
-                    <th>Nom Complet</th>
-                    <th>Heure du Scan</th>
                     <th>Statut</th>
+                    <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="live-data"></tbody>
+            <tbody id="tableBody">
+                <!-- Les données seront insérées ici par le script -->
+            </tbody>
         </table>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
@@ -48,16 +79,73 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const q = query(collection(db, "presences"), orderBy("horodatage", "desc"));
-        onSnapshot(q, (snapshot) => {
-            const table = document.getElementById('live-data');
-            table.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const item = doc.data();
-                const temps = item.horodatage ? item.horodatage.toDate().toLocaleTimeString() : "Synchronisation...";
-                table.innerHTML += `<tr><td>${item.matricule}</td><td><b>${item.nom}</b></td><td>${temps}</td><td><span class="badge">PRÉSENT</span></td></tr>`;
-            });
-        });
+        async function chargerDashboard() {
+            const now = new Date();
+            document.getElementById('dateDuJour').innerText = "Rapport du " + now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const dateISO = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+            const tableBody = document.getElementById('tableBody');
+            
+            try {
+                // 1. Récupérer tous les inscrits (Collection 'etudiants')
+                const snapshotEtudiants = await getDocs(collection(db, "etudiants"));
+                let etudiants = [];
+                snapshotEtudiants.forEach(doc => etudiants.push(doc.data()));
+
+                // 2. Récupérer les présences du jour (Collection 'presences')
+                const q = query(collection(db, "presences"), where("dateUnique", "==", dateISO));
+                const snapshotPresences = await getDocs(q);
+                
+                let presencesData = {};
+                snapshotPresences.forEach(doc => {
+                    const d = doc.data();
+                    presencesData[d.matricule] = d.statut;
+                });
+
+                // 3. Calculs et Affichage
+                let counts = { presents: 0, retards: 0, absents: 0 };
+                tableBody.innerHTML = "";
+
+                etudiants.forEach(etudiant => {
+                    const statut = presencesData[etudiant.matricule] || "Absent";
+                    
+                    // Mise à jour des compteurs
+                    if (statut === "Présent") counts.presents++;
+                    else if (statut === "En retard") counts.retards++;
+                    else counts.absents++;
+
+                    // Style du badge
+                    let badgeClass = "badge-absent";
+                    if (statut === "Présent") badgeClass = "badge-present";
+                    if (statut === "En retard") badgeClass = "badge-retard";
+
+                    // Message WhatsApp personnalisé
+                    const message = `INFO SOCEGO\n-------------------\nÉtudiant: ${etudiant.nom}\nMatricule: ${etudiant.matricule}\nStatut: ${statut}\nDate: ${dateISO}\n-------------------\nSystème BioStock par Narcisse.`;
+                    const waLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td><b>${etudiant.nom}</b></td>
+                            <td>${etudiant.matricule}</td>
+                            <td><span class="badge ${badgeClass}">${statut}</span></td>
+                            <td><a href="${waLink}" target="_blank" class="btn-whatsapp">📲 Notifier</a></td>
+                        </tr>
+                    `;
+                });
+
+                // Mettre à jour les chiffres du haut
+                document.getElementById('totalInscrits').innerText = etudiants.length;
+                document.getElementById('totalPresents').innerText = counts.presents;
+                document.getElementById('totalRetards').innerText = counts.retards;
+                document.getElementById('totalAbsents').innerText = counts.absents;
+
+            } catch (error) {
+                console.error("Erreur Dashboard:", error);
+                tableBody.innerHTML = "<tr><td colspan='4'>Erreur de chargement des données.</td></tr>";
+            }
+        }
+
+        chargerDashboard();
     </script>
 </body>
 </html>
