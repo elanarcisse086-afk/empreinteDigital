@@ -1,8 +1,6 @@
-// 1. IMPORTATION DES SERVICES FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-// 2. CONFIGURATION FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDncZQBPC4i8YPWlNVrsDfXW5K7e4xIF2s",
     authDomain: "empreinte-df8eb.firebaseapp.com",
@@ -12,92 +10,74 @@ const firebaseConfig = {
     appId: "1:359377971742:web:0b9338130b71925dfedc0f"
 };
 
-// 3. INITIALISATION
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 4. FONCTIONS DE FEEDBACK (Sons et Voix)
-function lancerFeedback(nom) {
-    // Jouer le bip sonore
-    const audio = new Audio('https://www.soundjay.com/button/beep-07.mp3');
-    audio.play().catch(e => console.log("Audio bloqué par le navigateur"));
-
-    // Synthèse vocale
+function parler(message) {
     if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance(`Bienvenue ${nom}. Accès autorisé.`);
+        const msg = new SpeechSynthesisUtterance(message);
         msg.lang = 'fr-FR';
         window.speechSynthesis.speak(msg);
     }
 }
 
-// 5. LOGIQUE DE SCAN RAPIDE
 document.getElementById('btnScan').addEventListener('click', async () => {
     const status = document.getElementById('status');
-    const modal = document.getElementById('modal');
-    const details = document.getElementById('details');
-    
-    // RÉCUPÉRATION DES INFOS DANS LA MÉMOIRE DU TÉLÉPHONE
-    const nomReconnu = localStorage.getItem("nomUtilisateur");
-    const matriculeReconnu = localStorage.getItem("matriculeUtilisateur");
-
-    if (!nomReconnu) {
-        status.innerText = "❌ Erreur : Aucun utilisateur enregistré sur ce téléphone.";
-        status.style.color = "#ef4444";
-        return;
-    }
+    const nom = localStorage.getItem("nomUtilisateur") || "Inconnu";
+    const matricule = localStorage.getItem("matriculeUtilisateur") || "000";
 
     try {
-        status.innerText = "Analyse de l'empreinte en cours...";
-        status.style.color = "#1e293b";
-
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
-
-        // DEMANDER L'AUTHENTIFICATION AU TÉLÉPHONE
         const assertion = await navigator.credentials.get({
-            publicKey: { 
-                challenge: challenge, 
-                timeout: 60000, 
-                userVerification: "required" 
-            }
+            publicKey: { challenge, timeout: 60000, userVerification: "required" }
         });
 
         if (assertion) {
-            // A. ENREGISTREMENT DE LA PRÉSENCE DANS FIREBASE
+            const maintenant = new Date();
+            const h = maintenant.getHours();
+            const m = maintenant.getMinutes();
+            
+            // --- LOGIQUE DE RETARD (Limite 08h00) ---
+            let statutFinal = "Présent";
+            let msgVocal = `Bienvenue ${nom}. Vous êtes marqué présent.`;
+
+            if (h > 8 || (h === 8 && m > 0)) {
+                statutFinal = "En retard";
+                msgVocal = `Attention ${nom}, vous êtes en retard.`;
+            }
+
+            // Enregistrement Firebase
             await addDoc(collection(db, "presences"), {
-                nom: nomReconnu,
-                matricule: matriculeReconnu,
+                nom: nom,
+                matricule: matricule,
                 horodatage: serverTimestamp(),
-                statut: "Présent"
+                dateUnique: maintenant.toLocaleDateString('en-CA'),
+                statut: statutFinal
             });
 
-            // B. REMPLISSAGE DE LA BOÎTE DE DIALOGUE (MODAL)
-            details.innerHTML = `
-                <p style="margin: 5px 0;"><strong>Nom :</strong> ${nomReconnu}</p>
-                <p style="margin: 5px 0;"><strong>Matricule :</strong> ${matriculeReconnu}</p>
-                <p style="margin: 5px 0;"><strong>Heure :</strong> ${new Date().toLocaleTimeString()}</p>
-                <p style="margin: 5px 0;"><strong>Lieu :</strong> SOCEGO Bafoussam</p>
+            // --- MODIFICATION : GÉNÉRATION DU LIEN WHATSAPP ---
+            const texteWhatsApp = `Rapport de Présence SOCEGO\n-------------------\nNom: ${nom}\nMatricule: ${matricule}\nStatut: ${statutFinal}\nHeure: ${maintenant.toLocaleTimeString()}\nDate: ${maintenant.toLocaleDateString('fr-FR')}`;
+            const lienWhatsApp = `https://wa.me/?text=${encodeURIComponent(texteWhatsApp)}`;
+
+            // Affichage Modal avec Bouton WhatsApp
+            document.getElementById('details').innerHTML = `
+                <p><b>Nom:</b> ${nom}</p>
+                <p><b>Statut:</b> <span style="color:${statutFinal === 'Présent' ? 'green' : 'red'}">${statutFinal}</span></p>
+                <p><b>Heure:</b> ${maintenant.toLocaleTimeString()}</p>
+                <hr>
+                <a href="${lienWhatsApp}" target="_blank" style="display:inline-block; padding:10px; background:#25D366; color:white; text-decoration:none; border-radius:5px; font-weight:bold; width:100%; text-align:center;">
+                    ENVOYER PAR WHATSAPP
+                </a>
             `;
-
-            // C. AFFICHAGE DE LA BOÎTE DE DIALOGUE
-            modal.style.display = 'flex';
+            document.getElementById('modal').style.display = 'flex';
             
-            // D. LANCER LE SON ET LA VOIX
-            lancerFeedback(nomReconnu);
-
-            status.innerText = "✅ Identification réussie !";
-            status.style.color = "#22c55e";
+            parler(msgVocal);
+            status.innerText = "✅ Succès";
         }
     } catch (err) {
-        status.innerText = "❌ Échec de l'identification.";
-        status.style.color = "#ef4444";
-        console.error("Erreur de scan :", err);
+        status.innerText = "❌ Échec du scan";
     }
 });
 
-// 6. FERMETURE DE LA BOÎTE DE DIALOGUE
-document.getElementById('btnFermer').onclick = () => {
-    document.getElementById('modal').style.display = 'none';
-    document.getElementById('status').innerText = "Prêt pour le scan suivant";
-    document.getElementById('status').style.color = "#1e293b";
-};
+document.getElementById('btnFermer').onclick = () => document.getElementById('modal').style.display = 'none';
