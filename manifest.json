@@ -1,0 +1,15 @@
+{
+  "name": "BioStock Biométrie",
+  "short_name": "BioStock",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#00d2ff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2618/2618239.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
